@@ -8,33 +8,32 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 @RequestMapping("/api/books")
 @RestController
 public class BookController {
 
     private final JdbcBookRepository bookRepository;
-    private final BookExistById bookExistById;
 
-    public BookController(JdbcBookRepository bookRepository, BookExistById bookExistById) {
+    public BookController(JdbcBookRepository bookRepository) {
         this.bookRepository = bookRepository;
-        this.bookExistById = bookExistById;
     }
 
     @GetMapping("")
     List<BookWithRatings> getAllBooks() {
         List<Book> books = bookRepository.findAll();
-      return bookRepository.getBooksWithAverageRating(books);
+      return this.getBooksWithAverageRating(books);
     }
 
     @GetMapping("/{id}")
-    List<BookWithRatings> getBook(@PathVariable Integer id) {
-        bookExistById.checkExistingBook((id));
-        Book book = bookRepository.findById(id).get();
-        List<BookWithRatings> bookWithRatings = new ArrayList<>();
-        Optional<Double> averageRating = bookRepository.findAverageRatingByBookId(book.id());
-        bookWithRatings.add(new BookWithRatings(book, averageRating));
-        return bookWithRatings;
+    Optional<BookWithRatings> getBook(@PathVariable Integer id) {
+
+        Optional<Book> book = bookRepository.findById(id);
+        if (book.isEmpty()) {
+            throw new BookNotFoundException(id);
+        }
+        return this.getBookWithAverageRating(book);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
@@ -62,7 +61,28 @@ public class BookController {
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer rating) {
        List<Book> books= bookRepository.searchBooks(title, author, year, rating);
-        return bookRepository.getBooksWithAverageRating(books);
+        return this.getBooksWithAverageRating(books);
+    }
+
+    public List<BookWithRatings> getBooksWithAverageRating(List<Book>books) {
+        List<BookWithRatings> bookWithRatings = new ArrayList<>();
+        for (Book book : books) {
+            Optional<Double> averageRating = bookRepository.findAverageRatingByBookId(book.id());
+            bookWithRatings.add(new BookWithRatings(book, averageRating));
+        }
+        return bookWithRatings;
+    }
+
+    public Optional<BookWithRatings> getBookWithAverageRating(Optional<Book> book) {
+
+        if (!book.isEmpty()) {
+            Book newBook = book.get();
+            Optional<Double> averageRating = bookRepository.findAverageRatingByBookId(newBook.id());
+            return Optional.of(new BookWithRatings(newBook, averageRating));
+        } else {
+            return Optional.empty();
+        }
+
     }
 
 }

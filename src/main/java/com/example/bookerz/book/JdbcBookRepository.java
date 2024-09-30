@@ -84,18 +84,6 @@ public class JdbcBookRepository implements BookRepository {
         Assert.state(updated >= 0, "Failed to delete books ");
     }
 
-
-
-
-    public List<BookWithRatings> getBooksWithAverageRating(List<Book>books) {
-        List<BookWithRatings> bookWithRatings = new ArrayList<>();
-        for (Book book : books) {
-            Optional<Double> averageRating = findAverageRatingByBookId(book.id());
-            bookWithRatings.add(new BookWithRatings(book, averageRating));
-        }
-        return bookWithRatings;
-    }
-
     public Optional<Double> findAverageRatingByBookId(Integer id) {
         return jdbcClient.sql("SELECT COALESCE(AVG(r.rating), 0) AS averageRating FROM books b " +
                         "LEFT JOIN ratings r ON r.book_id = b.id" +
