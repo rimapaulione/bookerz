@@ -29,7 +29,6 @@ public class RatingController {
 
     @GetMapping("/book/{book_id}")
     public List<Rating> getRatingsByBookId(@PathVariable Integer book_id) {
-        this.checkExistingBook(book_id);
         return ratingRepository.findByBookId(book_id);
     }
 

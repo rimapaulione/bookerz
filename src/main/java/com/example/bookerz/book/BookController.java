@@ -74,7 +74,6 @@ public class BookController {
     }
 
     public Optional<BookWithRatings> getBookWithAverageRating(Optional<Book> book) {
-
         if (!book.isEmpty()) {
             Book newBook = book.get();
             Optional<Double> averageRating = bookRepository.findAverageRatingByBookId(newBook.id());
